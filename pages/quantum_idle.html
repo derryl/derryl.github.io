@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Quantum Crystals</title>
+        <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #ff006e;
+            --dark: #202020;
+            --light: #f8f9fa;
+            --success: #4daa57;
+            --warning: #ffc857;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        #game-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .panel {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel h2 {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        #resources {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .resource {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .resource-name {
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .resource-value {
+            font-size: 1.2rem;
+        }
+        
+        .resource-rate {
+            font-size: 0.8rem;
+            color: var(--success);
+        }
+        
+        button {
+            background: linear-gradient(to right, var(--primary), #5e60ce);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px 0;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.big-button {
+            height: 80px;
+            font-size: 1.5rem;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(45deg, #3a86ff, #ff006e);
+            margin-bottom: 15px;
+        }
+        
+        button:disabled {
+            background: linear-gradient(to right, #888, #666);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .upgrade, .generator {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .upgrade h3, .generator h3 {
+            margin-bottom: 5px;
+            color: var(--warning);
+        }
+        
+        .upgrade p, .generator p {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .cost {
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+        
+        #message-log {
+            height: 150px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .message {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .message:last-child {
+            border-bottom: none;
+        }
+        
+        .unlock-notification {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            animation: fadeOut 5s forwards;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        #stats-panel {
+            margin-top: 20px;
+        }
+        
+        #stats-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .stat-item {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .progress-container {
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        #prestige-panel {
+            text-align: center;
+        }
+        
+        #prestige-button {
+            background: linear-gradient(45deg, #b100e8, #ff006e);
+            height: 60px;
+            margin-top: 10px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        .panel {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @media (max-width: 768px) {
+            #game-container {
+                flex-direction: column;
+            }
+            
+            .panel {
+                min-width: 100%;
+            }
+        }
+
+        /* Particle animation for crystal button */
+        .particles {
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, var(--primary), transparent);
+            border-radius: 50%;
+            opacity: 0;
+            animation: particle-animation 1s ease-out;
+        }
+
+        @keyframes particle-animation {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(1);
+                opacity: 0;
+            }
+        }
+    </style>
+    </head>
+    <body>
+        <header>
+            <h1>Quantum Crystals</h1>
+            <p>Harvest energy from the quantum realm</p>
+        </header>
+
+        <div id="game-container">
+            <div class="panel" id="main-panel">
+                <button id="crystal-button" class="big-button">Harvest
+                    Crystal</button>
+
+                <div id="resources">
+                    <!-- Resources will be populated here -->
+                </div>
+
+                <div id="message-container"></div>
+
+                <div id="message-log-container">
+                    <h2>Event Log</h2>
+                    <div id="message-log">
+                        <!-- Messages will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" id="upgrades-panel">
+                <h2>Upgrades</h2>
+                <div id="upgrades-list">
+                    <!-- Upgrades will be populated here -->
+                </div>
+            </div>
+
+            <div class="panel" id="generators-panel">
+                <h2>Generators</h2>
+                <div id="generators-list">
+                    <!-- Generators will be populated here -->
+                </div>
+            </div>
+
+            <div class="panel hidden" id="research-panel">
+                <h2>Research</h2>
+                <div id="research-list">
+                    <!-- Research will be populated here -->
+                </div>
+            </div>
+
+            <div class="panel hidden" id="prestige-panel">
+                <h2>Quantum Leap</h2>
+                <p>Reset your progress to gain Quantum Fragments which boost
+                    your production.</p>
+                <p>Current crystals: <span id="prestige-crystals">0</span></p>
+                <p>Quantum Fragments to gain: <span
+                        id="prestige-gain">0</span></p>
+                <button id="prestige-button" disabled>Perform Quantum
+                    Leap</button>
+            </div>
+
+            <div class="panel" id="stats-panel">
+                <h2>Statistics</h2>
+                <div id="stats-list">
+                    <!-- Stats will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="particles" id="particles"></div>
+
+        <script>
+        // Game state
+        let gameState = {
+            // Resources
+            resources: {
+                crystals: {
+                    name: "Crystals",
+                    amount: 0,
+                    totalProduced: 0,
+                    perClick: 1,
+                    perSecond: 0,
+                    unlocked: true
+                },
+                energy: {
+                    name: "Energy",
+                    amount: 0,
+                    totalProduced: 0,
+                    perSecond: 0,
+                    unlocked: false
+                },
+                fragments: {
+                    name: "Quantum Fragments",
+                    amount: 0,
+                    multiplier: 1,
+                    unlocked: false
+                }
+            },
+            
+            // Generators
+            generators: [
+                {
+                    id: "miner",
+                    name: "Crystal Miner",
+                    description: "Automatically harvests crystals.",
+                    resource: "crystals",
+                    production: 0.1,
+                    baseCost: 10,
+                    cost: 10,
+                    owned: 0,
+                    multiplier: 1,
+                    costMultiplier: 1.15,
+                    unlocked: true
+                },
+                {
+                    id: "extractor",
+                    name: "Energy Extractor",
+                    description: "Extracts energy from crystals.",
+                    resource: "energy",
+                    production: 0.05,
+                    baseCost: 50,
+                    cost: 50,
+                    costResource: "crystals",
+                    owned: 0,
+                    multiplier: 1,
+                    costMultiplier: 1.2,
+                    unlocked: false,
+                    requiresResource: "energy",
+                    requiredAmount: 0
+                },
+                {
+                    id: "amplifier",
+                    name: "Quantum Amplifier",
+                    description: "Boosts crystal production through quantum entanglement.",
+                    resource: "crystals",
+                    production: 0.5,
+                    baseCost: 25,
+                    cost: 25,
+                    costResource: "energy",
+                    owned: 0,
+                    multiplier: 1,
+                    costMultiplier: 1.25,
+                    unlocked: false,
+                    requiresResource: "energy",
+                    requiredAmount: 25
+                },
+                {
+                    id: "resonator",
+                    name: "Crystal Resonator",
+                    description: "Vastly increases crystal production through resonance.",
+                    resource: "crystals",
+                    production: 5,
+                    baseCost: 100,
+                    cost: 100,
+                    costResource: "energy",
+                    owned: 0,
+                    multiplier: 1,
+                    costMultiplier: 1.3,
+                    unlocked: false,
+                    requiresResource: "crystals",
+                    requiredAmount: 1000
+                }
+            ],
+            
+            // Upgrades
+            upgrades: [
+                {
+                    id: "betterTools",
+                    name: "Better Tools",
+                    description: "Double crystal production per click.",
+                    cost: 25,
+                    costResource: "crystals",
+                    purchased: false,
+                    unlocked: true,
+                    effect: () => {
+                        gameState.resources.crystals.perClick *= 2;
+                        logMessage("Better tools acquired. Crystal production per click doubled!");
+                    }
+                },
+                {
+                    id: "efficientMiners",
+                    name: "Efficient Miners",
+                    description: "Miners produce 50% more crystals.",
+                    cost: 100,
+                    costResource: "crystals",
+                    purchased: false,
+                    unlocked: false,
+                    requiresGenerator: "miner",
+                    requiredAmount: 5,
+                    effect: () => {
+                        let miner = gameState.generators.find(g => g.id === "miner");
+                        miner.multiplier *= 1.5;
+                        logMessage("Miner efficiency increased by 50%!");
+                        
+                        // Unlock energy if this is the first time
+                        if (!gameState.resources.energy.unlocked) {
+                            gameState.resources.energy.unlocked = true;
+                            gameState.generators.find(g => g.id === "extractor").unlocked = true;
+                            showNotification("Energy has been discovered! Build extractors to generate it.");
+                        }
+                    }
+                },
+                {
+                    id: "quantumTech",
+                    name: "Quantum Technology",
+                    description: "Unlock advanced quantum research.",
+                    cost: 50,
+                    costResource: "energy",
+                    purchased: false,
+                    unlocked: false,
+                    requiresResource: "energy",
+                    requiredAmount: 50,
+                    effect: () => {
+                        document.getElementById("research-panel").classList.remove("hidden");
+                        gameState.generators.find(g => g.id === "amplifier").unlocked = true;
+                        logMessage("Quantum research unlocked! New possibilities await.");
+                    }
+                },
+                {
+                    id: "crystallineResonance",
+                    name: "Crystalline Resonance",
+                    description: "All crystal production increased by 100%.",
+                    cost: 200,
+                    costResource: "energy",
+                    purchased: false,
+                    unlocked: false,
+                    requiresResource: "crystals",
+                    requiredAmount: 500,
+                    effect: () => {
+                        gameState.resources.crystals.perClick *= 2;
+                        gameState.generators.forEach(g => {
+                            if (g.resource === "crystals") {
+                                g.multiplier *= 2;
+                            }
+                        });
+                        gameState.generators.find(g => g.id === "resonator").unlocked = true;
+                        logMessage("Crystal resonance discovered! Production efficiency doubled!");
+                    }
+                },
+                {
+                    id: "quantumLeap",
+                    name: "Quantum Leap Technology",
+                    description: "Unlock the ability to perform Quantum Leaps.",
+                    cost: 1000,
+                    costResource: "crystals",
+                    purchased: false,
+                    unlocked: false,
+                    requiresResource: "crystals",
+                    requiredAmount: 1000,
+                    effect: () => {
+                        document.getElementById("prestige-panel").classList.remove("hidden");
+                        gameState.resources.fragments.unlocked = true;
+                        logMessage("Quantum Leap technology unlocked! You can now reset your progress to gain permanent bonuses.");
+                    }
+                }
+            ],
+            
+            // Research
+            research: [
+                {
+                    id: "efficientExtraction",
+                    name: "Efficient Extraction",
+                    description: "Energy extractors produce 100% more energy.",
+                    cost: 100,
+                    costResource: "energy",
+                    progress: 0,
+                    completed: false,
+                    unlocked: false,
+                    requiresUpgrade: "quantumTech",
+                    effect: () => {
+                        let extractor = gameState.generators.find(g => g.id === "extractor");
+                        extractor.multiplier *= 2;
+                        logMessage("Energy extraction efficiency doubled!");
+                    }
+                },
+                {
+                    id: "advancedResonance",
+                    name: "Advanced Resonance",
+                    description: "Crystal resonators produce 150% more crystals.",
+                    cost: 300,
+                    costResource: "energy",
+                    progress: 0,
+                    completed: false,
+                    unlocked: false,
+                    requiresGenerator: "resonator",
+                    requiredAmount: 1,
+                    effect: () => {
+                        let resonator = gameState.generators.find(g => g.id === "resonator");
+                        resonator.multiplier *= 2.5;
+                        logMessage("Resonator efficiency greatly increased!");
+                    }
+                }
+            ],
+            
+            // Stats
+            stats: {
+                totalClicks: 0,
+                timePlayed: 0,
+                prestigeCount: 0
+            },
+            
+            // Other state
+            lastUpdate: Date.now(),
+            lastAutoSave: Date.now()
+        };
+
+        window.gameState = gameState;
+
+        // DOM elements
+        const crystalButton = document.getElementById("crystal-button");
+        const resourcesContainer = document.getElementById("resources");
+        const upgradesContainer = document.getElementById("upgrades-list");
+        const generatorsContainer = document.getElementById("generators-list");
+        const researchContainer = document.getElementById("research-list");
+        const messageLog = document.getElementById("message-log");
+        const messageContainer = document.getElementById("message-container");
+        const statsContainer = document.getElementById("stats-list");
+        const prestigeButton = document.getElementById("prestige-button");
+        const particlesContainer = document.getElementById("particles");
+
+        // Initialize the game
+        function initGame() {
+            loadGame();
+            updateUI();
+            setInterval(gameLoop, 100); // 10 updates per second
+            setInterval(saveGame, 30000); // Save every 30 seconds
+        }
+
+        // Game loop
+        function gameLoop() {
+            const now = Date.now();
+            const deltaTime = (now - gameState.lastUpdate) / 1000; // Convert to seconds
+            
+            // Update resources based on production rates
+            calculateResourceProduction();
+            updateResources(deltaTime);
+            updateResearch(deltaTime);
+            
+            // Update UI
+            updateUI();
+            
+            // Check for unlocks
+            checkUnlocks();
+            
+            // Update stats
+            gameState.stats.timePlayed += deltaTime;
+            
+            // Auto-save
+            if (now - gameState.lastAutoSave > 30000) {
+                saveGame();
+                gameState.lastAutoSave = now;
+            }
+            
+            gameState.lastUpdate = now;
+        }
+
+        // Calculate resource production rates
+        function calculateResourceProduction() {
+            // Reset rates
+            Object.keys(gameState.resources).forEach(key => {
+                if (key !== "fragments") {
+                    gameState.resources[key].perSecond = 0;
+                }
+            });
+            
+            // Calculate from generators
+            gameState.generators.forEach(generator => {
+                if (generator.owned > 0 && generator.unlocked) {
+                    const fragmentMultiplier = (generator.resource === "crystals") ? 
+                        gameState.resources.fragments.multiplier : 1;
+                    
+                    const production = generator.owned * generator.production * generator.multiplier * fragmentMultiplier;
+                    gameState.resources[generator.resource].perSecond += production;
+                }
+            });
+        }
+
+        // Update resources based on production rates
+        function updateResources(deltaTime) {
+            Object.keys(gameState.resources).forEach(key => {
+                const resource = gameState.resources[key];
+                if (resource.unlocked && resource.perSecond) {
+                    const production = resource.perSecond * deltaTime;
+                    resource.amount += production;
+                    resource.totalProduced += production;
+                }
+            });
+        }
+
+        // Update research progress
+        function updateResearch(deltaTime) {
+            gameState.research.forEach(research => {
+                if (research.unlocked && !research.completed && research.progress < 1) {
+                    const resource = gameState.resources[research.costResource];
+                    const rate = Math.min(resource.perSecond * 0.1, resource.amount / 10);
+                    
+                    if (rate > 0) {
+                        const progressIncrease = (rate * deltaTime) / research.cost;
+                        resource.amount -= rate * deltaTime;
+                        research.progress += progressIncrease;
+                        
+                        if (research.progress >= 1) {
+                            research.completed = true;
+                            research.effect();
+                            updateUI();
+                        }
+                    }
+                }
+            });
+        }
+
+        // Check for unlocks based on game state
+        function checkUnlocks() {
+            // Upgrade unlocks
+            gameState.upgrades.forEach(upgrade => {
+                if (!upgrade.unlocked && !upgrade.purchased) {
+                    let shouldUnlock = true;
+                    
+                    if (upgrade.requiresGenerator) {
+                        const generator = gameState.generators.find(g => g.id === upgrade.requiresGenerator);
+                        if (generator.owned < upgrade.requiredAmount) {
+                            shouldUnlock = false;
+                        }
+                    }
+                    
+                    if (upgrade.requiresResource) {
+                        const resource = gameState.resources[upgrade.requiresResource];
+                        if (!resource.unlocked || resource.totalProduced < upgrade.requiredAmount) {
+                            shouldUnlock = false;
+                        }
+                    }
+                    
+                    if (shouldUnlock) {
+                        upgrade.unlocked = true;
+                        showNotification(`New upgrade available: ${upgrade.name}`);
+                        updateUI();
+                    }
+                }
+            });
+            
+            // Research unlocks
+            gameState.research.forEach(research => {
+                if (!research.unlocked && !research.completed) {
+                    let shouldUnlock = true;
+                    
+                    if (research.requiresUpgrade) {
+                        const upgrade = gameState.upgrades.find(u => u.id === research.requiresUpgrade);
+                        if (!upgrade.purchased) {
+                            shouldUnlock = false;
+                        }
+                    }
+                    
+                    if (research.requiresGenerator) {
+                        const generator = gameState.generators.find(g => g.id === research.requiresGenerator);
+                        if (generator.owned < research.requiredAmount) {
+                            shouldUnlock = false;
+                        }
+                    }
+                    
+                    if (shouldUnlock) {
+                        research.unlocked = true;
+                        showNotification(`New research available: ${research.name}`);
+                        updateUI();
+                    }
+                }
+            });
+            
+            // Check prestige
+            if (gameState.upgrades.find(u => u.id === "quantumLeap").purchased) {
+                const crystals = gameState.resources.crystals.amount;
+                if (crystals >= 2000) {
+                    prestigeButton.disabled = false;
+                    document.getElementById("prestige-crystals").textContent = formatNumber(crystals);
+                    document.getElementById("prestige-gain").textContent = formatNumber(calculatePrestigeGain(crystals));
+                } else {
+                    prestigeButton.disabled = true;
+                }
+            }
+        }
+
+        // Update the UI to reflect the current game state
+        function updateUI() {
+            updateResourcesDisplay();
+            updateUpgrades();
+            updateGenerators();
+            updateResearch();
+            updateStats();
+        }
+
+        // Update the resources display
+        function updateResourcesDisplay() {
+            resourcesContainer.innerHTML = "";
+            
+            Object.keys(gameState.resources).forEach(key => {
+                const resource = gameState.resources[key];
+                if (resource.unlocked) {
+                    const resourceElement = document.createElement("div");
+                    resourceElement.className = "resource";
+                    
+                    let rateHtml = "";
+                    if (resource.perSecond !== undefined) {
+                        rateHtml = `<div class="resource-rate">(${formatNumber(resource.perSecond)}/sec)</div>`;
+                    }
+                    
+                    resourceElement.innerHTML = `
+                        <div class="resource-name">${resource.name}</div>
+                        <div>
+                            <div class="resource-value">${formatNumber(resource.amount)}</div>
+                            ${rateHtml}
+                        </div>
+                    `;
+                    
+                    resourcesContainer.appendChild(resourceElement);
+                }
+            });
+        }
+
+        // Update the upgrades display
+        function updateUpgrades() {
+            const container = upgradesContainer;
+            
+            // First, remove upgrades that should no longer be shown
+            Array.from(container.children).forEach(child => {
+                if (child.tagName !== 'P') {  // Skip the "No upgrades available" message
+                    const upgradeId = child.getAttribute('data-upgrade-id');
+                    const upgrade = gameState.upgrades.find(u => u.id === upgradeId);
+                    if (!upgrade || !upgrade.unlocked || upgrade.purchased) {
+                        container.removeChild(child);
+                    }
+                }
+            });
+            
+            // Then update or add upgrades that should be shown
+            const availableUpgrades = gameState.upgrades.filter(u => u.unlocked && !u.purchased);
+            
+            if (availableUpgrades.length === 0) {
+                if (!container.querySelector('p')) {
+                    container.innerHTML = "<p>No upgrades available yet.</p>";
+                }
+                return;
+            }
+            
+            availableUpgrades.forEach(upgrade => {
+                let upgradeElement = container.querySelector(`[data-upgrade-id="${upgrade.id}"]`);
+                const resource = gameState.resources[upgrade.costResource];
+                const canAfford = resource.amount >= upgrade.cost;
+                
+                if (!upgradeElement) {
+                    // Create new upgrade element if it doesn't exist
+                    upgradeElement = document.createElement("div");
+                    upgradeElement.className = "upgrade";
+                    upgradeElement.setAttribute('data-upgrade-id', upgrade.id);
+                    
+                    upgradeElement.innerHTML = `
+                        <h3>${upgrade.name}</h3>
+                        <p>${upgrade.description}</p>
+                        <div class="cost">Cost: ${formatNumber(upgrade.cost)} ${resource.name}</div>
+                        <button id="upgrade-${upgrade.id}">Purchase</button>
+                    `;
+                    
+                    container.appendChild(upgradeElement);
+                    
+                    // Add event listener only once when creating the element
+                    const button = upgradeElement.querySelector(`#upgrade-${upgrade.id}`);
+                    button.addEventListener("click", () => purchaseUpgrade(upgrade));
+                }
+                
+                // Just update the button's disabled state
+                const button = upgradeElement.querySelector('button');
+                button.disabled = !canAfford;
+            });
+        }
+
+        // Update the generators display
+        function updateGenerators() {
+            const container = generatorsContainer;
+            
+            // Remove generators that should no longer be shown
+            Array.from(container.children).forEach(child => {
+                if (child.tagName !== 'P') {  // Skip the "No generators available" message
+                    const generatorId = child.getAttribute('data-generator-id');
+                    const generator = gameState.generators.find(g => g.id === generatorId);
+                    if (!generator || !generator.unlocked) {
+                        container.removeChild(child);
+                    }
+                }
+            });
+            
+            // Update or add generators that should be shown
+            const availableGenerators = gameState.generators.filter(g => g.unlocked);
+            
+            if (availableGenerators.length === 0) {
+                if (!container.querySelector('p')) {
+                    container.innerHTML = "<p>No generators available yet.</p>";
+                }
+                return;
+            }
+            
+            availableGenerators.forEach(generator => {
+                let generatorElement = container.querySelector(`[data-generator-id="${generator.id}"]`);
+                const costResource = gameState.resources[generator.costResource || "crystals"];
+                const canAfford = costResource.amount >= generator.cost;
+                const fragmentMultiplier = (generator.resource === "crystals") ? 
+                    gameState.resources.fragments.multiplier : 1;
+                
+                if (!generatorElement) {
+                    // Create new generator element if it doesn't exist
+                    generatorElement = document.createElement("div");
+                    generatorElement.className = `generator generator-${generator.id}`;
+                    generatorElement.setAttribute('data-generator-id', generator.id);
+                    
+                    generatorElement.innerHTML = `
+                        <h3>${generator.name} (<span class="owned">${generator.owned}</span>)</h3>
+                        <p>${generator.description}</p>
+                        <p class="production">Produces ${formatNumber(generator.production * generator.multiplier * fragmentMultiplier)} 
+                           ${gameState.resources[generator.resource].name}/sec each</p>
+                        <div class="cost">Cost: <span class="cost-value">${formatNumber(generator.cost)}</span> ${costResource.name}</div>
+                        <button id="generator-${generator.id}">Buy</button>
+                    `;
+                    
+                    container.appendChild(generatorElement);
+                    
+                    // Add event listener only once when creating the element
+                    const button = generatorElement.querySelector(`#generator-${generator.id}`);
+                    button.addEventListener("click", () => purchaseGenerator(generator));
+                } else {
+                    // Update only the dynamic parts
+                    generatorElement.querySelector('.owned').textContent = generator.owned;
+                    generatorElement.querySelector('.production').textContent = 
+                        `Produces ${formatNumber(generator.production * generator.multiplier * fragmentMultiplier)} 
+                         ${gameState.resources[generator.resource].name}/sec each`;
+                    generatorElement.querySelector('.cost-value').textContent = formatNumber(generator.cost);
+                }
+                
+                // Update button state
+                const button = generatorElement.querySelector('button');
+                button.disabled = !canAfford;
+            });
+        }
+
+        // Update the research display
+        function updateResearch() {
+            if (document.getElementById("research-panel").classList.contains("hidden")) {
+                return;
+            }
+            
+            const container = researchContainer;
+            
+            // Remove research items that should no longer be shown
+            Array.from(container.children).forEach(child => {
+                if (child.tagName !== 'P' && child.tagName !== 'DIV') {  // Skip messages and completed research div
+                    const researchId = child.getAttribute('data-research-id');
+                    const research = gameState.research.find(r => r.id === researchId);
+                    if (!research || !research.unlocked || research.completed) {
+                        container.removeChild(child);
+                    }
+                }
+            });
+            
+            // Update or add research items that should be shown
+            const availableResearch = gameState.research.filter(r => r.unlocked && !r.completed);
+            const completedResearch = gameState.research.filter(r => r.completed).length;
+            
+            if (availableResearch.length === 0 && completedResearch === 0) {
+                if (!container.querySelector('p')) {
+                    container.innerHTML = "<p>No research available yet.</p>";
+                }
+                return;
+            }
+            
+            availableResearch.forEach(research => {
+                let researchElement = container.querySelector(`[data-research-id="${research.id}"]`);
+                
+                if (!researchElement) {
+                    // Create new research element if it doesn't exist
+                    researchElement = document.createElement("div");
+                    researchElement.className = "upgrade";
+                    researchElement.setAttribute('data-research-id', research.id);
+                    
+                    researchElement.innerHTML = `
+                        <h3>${research.name}</h3>
+                        <p>${research.description}</p>
+                        <div class="cost">Cost: ${formatNumber(research.cost)} ${gameState.resources[research.costResource].name}</div>
+                        <div class="progress-container">
+                            <div class="progress-bar"></div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(researchElement);
+                }
+                
+                // Update only the progress bar
+                const progressBar = researchElement.querySelector('.progress-bar');
+                progressBar.style.width = `${Math.min(research.progress * 100, 100)}%`;
+            });
+            
+            // Update completed research count
+            let completedElement = container.querySelector('.completed-research');
+            if (completedResearch > 0) {
+                if (!completedElement) {
+                    completedElement = document.createElement("div");
+                    completedElement.className = 'completed-research';
+                    container.appendChild(completedElement);
+                }
+                completedElement.innerHTML = `<p>Completed research: ${completedResearch}</p>`;
+            } else if (completedElement) {
+                container.removeChild(completedElement);
+            }
+        }
+
+        // Update the stats display
+        function updateStats() {
+            statsContainer.innerHTML = "";
+            
+            // Create stats entries
+            const stats = [
+                { name: "Total Clicks", value: gameState.stats.totalClicks },
+                { name: "Time Played", value: formatTime(gameState.stats.timePlayed) },
+                { name: "Total Crystals", value: formatNumber(gameState.resources.crystals.totalProduced) }
+            ];
+            
+            if (gameState.resources.energy.unlocked) {
+                stats.push({ name: "Total Energy", value: formatNumber(gameState.resources.energy.totalProduced) });
+            }
+            
+            if (gameState.stats.prestigeCount > 0) {
+                stats.push({ name: "Quantum Leaps", value: gameState.stats.prestigeCount });
+            }
+            
+            stats.forEach(stat => {
+                const statElement = document.createElement("div");
+                statElement.className = "stat-item";
+                statElement.innerHTML = `
+                    <div>${stat.name}</div>
+                    <div>${stat.value}</div>
+                `;
+                statsContainer.appendChild(statElement);
+            });
+        }
+
+        // Purchase an upgrade
+        function purchaseUpgrade(upgrade) {
+            const resource = gameState.resources[upgrade.costResource];
+
+            console.log('purchaseUpgrade', upgrade, `price: ${upgrade.cost}`, `available money: ${resource.amount}`);
+            
+            if (resource.amount >= upgrade.cost) {
+                resource.amount -= upgrade.cost;
+                upgrade.purchased = true;
+                upgrade.effect();
+                updateUI();
+            }
+        }
+
+        // Purchase a generator
+        function purchaseGenerator(generator) {
+            const costResource = gameState.resources[generator.costResource || "crystals"];
+
+            console.log('purchaseGenerator', generator, `price: ${generator.cost}`, `available money: ${costResource.amount}`);
+            
+            if (costResource.amount >= generator.cost) {
+                costResource.amount -= generator.cost;
+                generator.owned++;
+                
+                // Update cost for next purchase
+                generator.cost = Math.floor(generator.baseCost * Math.pow(generator.costMultiplier, generator.owned));
+                
+                // Recalculate production rates
+                calculateResourceProduction();
+                updateUI();
+            }
+        }
+
+        // Format a number for display
+        function formatNumber(num) {
+            if (num === undefined) return "0";
+            
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + " T";
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + " B";
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + " M";
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + " K";
+            
+            // Handle small numbers with 2 decimal places if needed
+            if (num < 1 && num > 0) return num.toFixed(2);
+            
+            return num < 100 ? Math.floor(num * 10) / 10 : Math.floor(num);
+        }
+
+        // Format time for display
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m ${secs}s`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        // Log a message to the message log
+        function logMessage(message) {
+            const messageElement = document.createElement("div");
+            messageElement.className = "message";
+            messageElement.textContent = message;
+            messageLog.appendChild(messageElement);
+            messageLog.scrollTop = messageLog.scrollHeight;
+            
+            // Trim old messages if too many
+            while (messageLog.children.length > 20) {
+                messageLog.removeChild(messageLog.firstChild);
+            }
+        }
+
+        // Show a notification
+        function showNotification(message) {
+            const notificationElement = document.createElement("div");
+            notificationElement.className = "unlock-notification";
+            notificationElement.textContent = message;
+            messageContainer.appendChild(notificationElement);
+            
+            // Remove notification after animation
+            setTimeout(() => {
+                if (messageContainer.contains(notificationElement)) {
+                    messageContainer.removeChild(notificationElement);
+                }
+            }, 5000);
+            
+            // Also log the message
+            logMessage(message);
+        }
+
+        // Calculate prestige gain
+        function calculatePrestigeGain(crystals) {
+            return Math.floor(Math.sqrt(crystals / 1000));
+        }
+
+        // Perform prestige
+        function prestige() {
+            const crystals = gameState.resources.crystals.amount;
+            const fragmentsGain = calculatePrestigeGain(crystals);
+            
+            if (fragmentsGain > 0) {
+                // Save fragments and stats
+                const fragments = gameState.resources.fragments.amount + fragmentsGain;
+                const prestigeCount = gameState.stats.prestigeCount + 1;
+                const totalClicks = gameState.stats.totalClicks;
+                const timePlayed = gameState.stats.timePlayed;
+                
+                // Reset game state but keep upgrades that persist
+                gameState = JSON.parse(JSON.stringify(getInitialGameState()));
+                
+                // Restore preserved values
+                gameState.resources.fragments.amount = fragments;
+                gameState.resources.fragments.unlocked = true;
+                gameState.resources.fragments.multiplier = 1 + fragments * 0.1; // 10% boost per fragment
+                gameState.stats.prestigeCount = prestigeCount;
+                gameState.stats.totalClicks = totalClicks;
+                gameState.stats.timePlayed = timePlayed;
+                
+                // Unlock prestige panel directly
+                document.getElementById("prestige-panel").classList.remove("hidden");
+                gameState.upgrades.find(u => u.id === "quantumLeap").purchased = true;
+                
+                logMessage(`Quantum Leap performed! Gained ${fragmentsGain} Quantum Fragments.`);
+                showNotification(`Quantum Leap successful! Your production is now boosted by ${Math.floor(gameState.resources.fragments.multiplier * 100 - 100)}%!`);
+                
+                updateUI();
+                saveGame();
+            }
+        }
+
+        // Save game to localStorage
+        function saveGame() {
+            localStorage.setItem("quantumCrystalsGame", JSON.stringify(gameState));
+        }
+
+        // Load game from localStorage
+        function loadGame() {
+            const savedGame = localStorage.getItem("quantumCrystalsGame");
+            if (savedGame) {
+                try {
+                    const parsedSave = JSON.parse(savedGame);
+                    
+                    // Merge saved game with current game state to handle updates
+                    mergeGameState(gameState, parsedSave);
+                    
+                    // Update last update time to prevent huge resource jumps
+                    gameState.lastUpdate = Date.now();
+                    
+                    logMessage("Game loaded successfully!");
+                } catch (error) {
+                    console.error("Error loading game:", error);
+                    logMessage("Error loading saved game. Starting fresh.");
+                }
+            } else {
+                logMessage("Welcome to Quantum Crystals! Click the button to begin harvesting.");
+            }
+        }
+
+        // Get the initial game state (for resets)
+        function getInitialGameState() {
+            return {
+                resources: {
+                    crystals: {
+                        name: "Crystals",
+                        amount: 0,
+                        totalProduced: 0,
+                        perClick: 1,
+                        perSecond: 0,
+                        unlocked: true
+                    },
+                    energy: {
+                        name: "Energy",
+                        amount: 0,
+                        totalProduced: 0,
+                        perSecond: 0,
+                        unlocked: false
+                    },
+                    fragments: {
+                        name: "Quantum Fragments",
+                        amount: 0,
+                        multiplier: 1,
+                        unlocked: false
+                    }
+                },
+                generators: [
+                    {
+                        id: "miner",
+                        name: "Crystal Miner",
+                        description: "Automatically harvests crystals.",
+                        resource: "crystals",
+                        production: 0.1,
+                        baseCost: 10,
+                        cost: 10,
+                        owned: 0,
+                        multiplier: 1,
+                        costMultiplier: 1.15,
+                        unlocked: true
+                    },
+                    {
+                        id: "extractor",
+                        name: "Energy Extractor",
+                        description: "Extracts energy from crystals.",
+                        resource: "energy",
+                        production: 0.05,
+                        baseCost: 50,
+                        cost: 50,
+                        costResource: "crystals",
+                        owned: 0,
+                        multiplier: 1,
+                        costMultiplier: 1.2,
+                        unlocked: false,
+                        requiresResource: "energy",
+                        requiredAmount: 0
+                    },
+                    {
+                        id: "amplifier",
+                        name: "Quantum Amplifier",
+                        description: "Boosts crystal production through quantum entanglement.",
+                        resource: "crystals",
+                        production: 0.5,
+                        baseCost: 25,
+                        cost: 25,
+                        costResource: "energy",
+                        owned: 0,
+                        multiplier: 1,
+                        costMultiplier: 1.25,
+                        unlocked: false,
+                        requiresResource: "energy",
+                        requiredAmount: 25
+                    },
+                    {
+                        id: "resonator",
+                        name: "Crystal Resonator",
+                        description: "Vastly increases crystal production through resonance.",
+                        resource: "crystals",
+                        production: 5,
+                        baseCost: 100,
+                        cost: 100,
+                        costResource: "energy",
+                        owned: 0,
+                        multiplier: 1,
+                        costMultiplier: 1.3,
+                        unlocked: false,
+                        requiresResource: "crystals",
+                        requiredAmount: 1000
+                    }
+                ],
+                upgrades: [
+                    {
+                        id: "betterTools",
+                        name: "Better Tools",
+                        description: "Double crystal production per click.",
+                        cost: 25,
+                        costResource: "crystals",
+                        purchased: false,
+                        unlocked: true,
+                        effect: () => {
+                            gameState.resources.crystals.perClick *= 2;
+                            logMessage("Better tools acquired. Crystal production per click doubled!");
+                        }
+                    },
+                    {
+                        id: "efficientMiners",
+                        name: "Efficient Miners",
+                        description: "Miners produce 50% more crystals.",
+                        cost: 100,
+                        costResource: "crystals",
+                        purchased: false,
+                        unlocked: false,
+                        requiresGenerator: "miner",
+                        requiredAmount: 5,
+                        effect: () => {
+                            let miner = gameState.generators.find(g => g.id === "miner");
+                            miner.multiplier *= 1.5;
+                            logMessage("Miner efficiency increased by 50%!");
+                            
+                            if (!gameState.resources.energy.unlocked) {
+                                gameState.resources.energy.unlocked = true;
+                                gameState.generators.find(g => g.id === "extractor").unlocked = true;
+                                showNotification("Energy has been discovered! Build extractors to generate it.");
+                            }
+                        }
+                    },
+                    {
+                        id: "quantumTech",
+                        name: "Quantum Technology",
+                        description: "Unlock advanced quantum research.",
+                        cost: 50,
+                        costResource: "energy",
+                        purchased: false,
+                        unlocked: false,
+                        requiresResource: "energy",
+                        requiredAmount: 50,
+                        effect: () => {
+                            document.getElementById("research-panel").classList.remove("hidden");
+                            gameState.generators.find(g => g.id === "amplifier").unlocked = true;
+                            logMessage("Quantum research unlocked! New possibilities await.");
+                        }
+                    },
+                    {
+                        id: "crystallineResonance",
+                        name: "Crystalline Resonance",
+                        description: "All crystal production increased by 100%.",
+                        cost: 200,
+                        costResource: "energy",
+                        purchased: false,
+                        unlocked: false,
+                        requiresResource: "crystals",
+                        requiredAmount: 500,
+                        effect: () => {
+                            gameState.resources.crystals.perClick *= 2;
+                            gameState.generators.forEach(g => {
+                                if (g.resource === "crystals") {
+                                    g.multiplier *= 2;
+                                }
+                            });
+                            gameState.generators.find(g => g.id === "resonator").unlocked = true;
+                            logMessage("Crystal resonance discovered! Production efficiency doubled!");
+                        }
+                    },
+                    {
+                        id: "quantumLeap",
+                        name: "Quantum Leap Technology",
+                        description: "Unlock the ability to perform Quantum Leaps.",
+                        cost: 1000,
+                        costResource: "crystals",
+                        purchased: false,
+                        unlocked: false,
+                        requiresResource: "crystals",
+                        requiredAmount: 1000,
+                        effect: () => {
+                            document.getElementById("prestige-panel").classList.remove("hidden");
+                            gameState.resources.fragments.unlocked = true;
+                            logMessage("Quantum Leap technology unlocked! You can now reset your progress to gain permanent bonuses.");
+                        }
+                    }
+                ],
+                research: [
+                    {
+                        id: "efficientExtraction",
+                        name: "Efficient Extraction",
+                        description: "Energy extractors produce 100% more energy.",
+                        cost: 100,
+                        costResource: "energy",
+                        progress: 0,
+                        completed: false,
+                        unlocked: false,
+                        requiresUpgrade: "quantumTech",
+                        effect: () => {
+                            let extractor = gameState.generators.find(g => g.id === "extractor");
+                            extractor.multiplier *= 2;
+                            logMessage("Energy extraction efficiency doubled!");
+                        }
+                    },
+                    {
+                        id: "advancedResonance",
+                        name: "Advanced Resonance",
+                        description: "Crystal resonators produce 150% more crystals.",
+                        cost: 300,
+                        costResource: "energy",
+                        progress: 0,
+                        completed: false,
+                        unlocked: false,
+                        requiresGenerator: "resonator",
+                        requiredAmount: 1,
+                        effect: () => {
+                            let resonator = gameState.generators.find(g => g.id === "resonator");
+                            resonator.multiplier *= 2.5;
+                            logMessage("Resonator efficiency greatly increased!");
+                        }
+                    }
+                ],
+                stats: {
+                    totalClicks: 0,
+                    timePlayed: 0,
+                    prestigeCount: 0
+                },
+                lastUpdate: Date.now(),
+                lastAutoSave: Date.now()
+            };
+        }
+
+        // Merge game states (to handle updates)
+        function mergeGameState(target, source) {
+            // Merge resources
+            for (const key in source.resources) {
+                if (target.resources[key]) {
+                    Object.assign(target.resources[key], source.resources[key]);
+                }
+            }
+            
+            // Merge generators
+            for (let i = 0; i < Math.min(target.generators.length, source.generators.length); i++) {
+                const sourceGen = source.generators[i];
+                const targetGen = target.generators.find(g => g.id === sourceGen.id);
+                if (targetGen) {
+                    Object.assign(targetGen, sourceGen);
+                }
+            }
+            
+            // Merge upgrades
+            for (let i = 0; i < Math.min(target.upgrades.length, source.upgrades.length); i++) {
+                const sourceUpgrade = source.upgrades[i];
+                const targetUpgrade = target.upgrades.find(u => u.id === sourceUpgrade.id);
+                if (targetUpgrade) {
+                    targetUpgrade.purchased = sourceUpgrade.purchased;
+                    targetUpgrade.unlocked = sourceUpgrade.unlocked;
+                }
+            }
+            
+            // Merge research
+            if (source.research) {
+                for (let i = 0; i < Math.min(target.research.length, source.research.length); i++) {
+                    const sourceResearch = source.research[i];
+                    const targetResearch = target.research.find(r => r.id === sourceResearch.id);
+                    if (targetResearch) {
+                        targetResearch.progress = sourceResearch.progress;
+                        targetResearch.completed = sourceResearch.completed;
+                        targetResearch.unlocked = sourceResearch.unlocked;
+                    }
+                }
+            }
+            
+            // Merge stats
+            if (source.stats) {
+                Object.assign(target.stats, source.stats);
+            }
+            
+            // Restore other properties
+            target.lastUpdate = source.lastUpdate || Date.now();
+            target.lastAutoSave = source.lastAutoSave || Date.now();
+        }
+
+        // Create particles effect
+        function createParticles(x, y) {
+            const numParticles = 8;
+            
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random size between 8 and 16px
+                const size = Math.random() * 8 + 8;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random direction
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 30 + Math.random() * 30;
+                const xOffset = Math.cos(angle) * distance;
+                const yOffset = Math.sin(angle) * distance;
+                
+                particle.style.setProperty('--x', `${xOffset}px`);
+                particle.style.setProperty('--y', `${yOffset}px`);
+                
+                // Position at click point
+                particle.style.left = `${x - size/2}px`;
+                particle.style.top = `${y - size/2}px`;
+                
+                particlesContainer.appendChild(particle);
+                
+                // Remove after animation completes
+                setTimeout(() => {
+                    if (particlesContainer.contains(particle)) {
+                        particlesContainer.removeChild(particle);
+                    }
+                }, 1000);
+            }
+        }
+
+        // Event listeners
+        crystalButton.addEventListener("click", (e) => {
+            const clickAmount = gameState.resources.crystals.perClick * gameState.resources.fragments.multiplier;
+            gameState.resources.crystals.amount += clickAmount;
+            gameState.resources.crystals.totalProduced += clickAmount;
+            gameState.stats.totalClicks++;
+            
+            updateResourcesDisplay(); // Immediately update just the resources display
+            
+            // Create particle effect at click position
+            const rect = crystalButton.getBoundingClientRect();
+            const x = e.clientX //- rect.left;
+            const y = e.clientY //- rect.top;
+            createParticles(x, y);
+        });
+
+        prestigeButton.addEventListener("click", () => {
+            if (confirm("Are you sure you want to perform a Quantum Leap? You will lose all progress but gain permanent bonuses.")) {
+                prestige();
+            }
+        });
+
+        // Initialize the game
+        initGame();
+        
+        // Reset game (for development)
+        window.resetGame = function() {
+            if (confirm("Are you sure you want to completely reset your game? All progress will be lost!")) {
+                localStorage.removeItem("quantumCrystalsGame");
+                location.reload();
+            }
+        };
+    </script>
+    </body>
+</html>

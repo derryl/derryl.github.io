@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hominid Evolutionary Tree</title>
+        <style>
+        :root {
+            --background: #f8f5f0;
+            --node: #7c5e48;
+            --line: #a97c50;
+            --text: #33302e;
+            --highlight: #d4a76a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--text);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .tree-container {
+            position: relative;
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .tree {
+            position: relative;
+            width: 900px;
+            height: 600px;
+            margin: 0 auto;
+        }
+
+        .node {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .node:hover .skull {
+            transform: scale(1.1);
+        }
+
+        .node:hover .species-name {
+            font-weight: bold;
+            color: var(--highlight);
+        }
+
+        .skull {
+            width: 70px;
+            height: 70px;
+            background-color: var(--node);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .skull svg {
+            width: 50px;
+            height: 50px;
+            fill: #f0e6d9;
+        }
+
+        .species-name {
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 5px;
+            transition: color 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .species-info {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            max-width: 90px;
+            opacity: 0.8;
+        }
+
+        .branch {
+            position: absolute;
+            background-color: var(--line);
+            z-index: -1;
+        }
+
+        .horizontal-branch {
+            height: 2px;
+        }
+
+        .vertical-branch {
+            width: 2px;
+        }
+
+        .divergence {
+            position: absolute;
+            background-color: #fff;
+            border: 2px solid var(--line);
+            border-radius: 15px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text);
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .timeline {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 50px;
+            box-sizing: border-box;
+        }
+
+        .time-marker {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-marker::before {
+            content: '';
+            width: 1px;
+            height: 10px;
+            background-color: var(--text);
+        }
+
+        .time-label {
+            font-size: 12px;
+            margin-top: 5px;
+            color: var(--text);
+        }
+
+        .info-panel {
+            margin-top: 30px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            display: none;
+        }
+
+        .info-panel h3 {
+            margin-top: 0;
+            color: var(--node);
+            border-bottom: 1px solid var(--highlight);
+            padding-bottom: 8px;
+        }
+
+        .info-panel p {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .tree {
+                width: 700px;
+            }
+            
+            .skull {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .skull svg {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .species-name {
+                font-size: 12px;
+            }
+            
+            .species-info {
+                font-size: 10px;
+                max-width: 80px;
+            }
+        }
+    </style>
+    </head>
+    <body>
+        <h1>Evolutionary Tree of Hominids and Our Closest Relatives</h1>
+        <div class="container">
+            <div class="tree-container">
+                <div class="tree" id="evolutionary-tree">
+                    <!-- Nodes and branches will be created by JavaScript -->
+                </div>
+            </div>
+            <div class="info-panel" id="info-panel">
+                <h3 id="info-title">Species Information</h3>
+                <p id="info-content"></p>
+            </div>
+        </div>
+
+        <script>
+        const speciesData = [
+            {
+                id: 'hsapiens',
+                name: 'Homo sapiens',
+                x: 800,
+                y: 100,
+                info: 'Modern humans originated around 300,000 years ago in Africa. Our species possesses a large brain, bipedal locomotion, and complex language capabilities.',
+                skullPath: "M35,15 C25,5 15,10 15,25 C15,35 20,45 35,55 C50,45 55,35 55,25 C55,10 45,5 35,15 M25,30 C25,32 27,35 30,35 C33,35 35,32 35,30 M35,30 C35,32 37,35 40,35 C43,35 45,32 45,30 M30,40 C33,45 37,45 40,40"
+            },
+            {
+                id: 'hneanderthalensis',
+                name: 'Homo neanderthalensis',
+                x: 800,
+                y: 200,
+                info: 'Neanderthals lived in Europe and parts of Asia from about 400,000 to 40,000 years ago. They had robust bodies, larger brains than modern humans, and were well-adapted to cold climates.',
+                skullPath: "M35,15 C22,6 12,12 12,25 C12,35 18,45 35,58 C52,45 58,35 58,25 C58,12 48,6 35,15 M22,28 C22,31 25,34 28,34 C31,34 34,31 34,28 M36,28 C36,31 39,34 42,34 C45,34 48,31 48,28 M28,43 C32,48 38,48 42,43"
+            },
+            {
+                id: 'hdenisova',
+                name: 'Homo denisova',
+                x: 800,
+                y: 300,
+                info: 'Denisovans were discovered in 2010 based on DNA from a finger bone. They lived in Asia and interbred with both Neanderthals and modern humans.',
+                skullPath: "M35,15 C24,7 14,12 14,25 C14,35 19,45 35,57 C51,45 56,35 56,25 C56,12 46,7 35,15 M24,29 C24,31 26,34 29,34 C32,34 34,31 34,29 M36,29 C36,31 38,34 41,34 C44,34 46,31 46,29 M29,41 C32,46 38,46 41,41"
+            },
+            {
+                id: 'hheidelbergensis',
+                name: 'Homo heidelbergensis',
+                x: 650,
+                y: 200,
+                info: 'Homo heidelbergensis lived from about 700,000 to 300,000 years ago. They had nearly human-sized brains and were likely the common ancestor of Homo sapiens and Homo neanderthalensis.',
+                skullPath: "M35,15 C23,6 13,12 13,25 C13,35 18,47 35,60 C52,47 57,35 57,25 C57,12 47,6 35,15 M23,28 C23,31 26,34 29,34 C32,34 35,31 35,28 M35,28 C35,31 38,34 41,34 C44,34 47,31 47,28 M29,45 C32,50 38,50 41,45"
+            },
+            {
+                id: 'herectus',
+                name: 'Homo erectus',
+                x: 500,
+                y: 200,
+                info: 'Homo erectus first appeared about 1.9 million years ago and survived until about 143,000 years ago. They were the first hominids to migrate out of Africa and likely the first to control fire.',
+                skullPath: "M35,13 C22,4 12,10 12,25 C12,35 18,48 35,63 C52,48 58,35 58,25 C58,10 48,4 35,13 M22,26 C22,29 25,32 28,32 C31,32 34,29 34,26 M36,26 C36,29 39,32 42,32 C45,32 48,29 48,26 M28,42 C32,47 38,47 42,42"
+            },
+            {
+                id: 'hhabilis',
+                name: 'Homo habilis',
+                x: 350,
+                y: 200,
+                info: 'Homo habilis lived between 2.4 and 1.5 million years ago. Often called "handy man," they were one of the earliest members of the genus Homo and among the first stone toolmakers.',
+                skullPath: "M35,13 C21,5 11,10 11,25 C11,35 16,48 35,65 C54,48 59,35 59,25 C59,10 49,5 35,13 M21,26 C21,29 24,32 27,32 C30,32 33,29 33,26 M37,26 C37,29 40,32 43,32 C46,32 49,29 49,26 M27,42 C31,47 39,47 43,42"
+            },
+            {
+                id: 'aafricanus',
+                name: 'Australopithecus africanus',
+                x: 250,
+                y: 250,
+                info: 'Australopithecus africanus lived between 3.3 and 2.1 million years ago in Southern Africa. Their brain was about one-third the size of modern humans, but they walked upright.',
+                skullPath: "M35,12 C20,4 10,10 10,25 C10,35 15,48 35,68 C55,48 60,35 60,25 C60,10 50,4 35,12 M20,25 C20,28 23,31 26,31 C29,31 32,28 32,25 M38,25 C38,28 41,31 44,31 C47,31 50,28 50,25 M26,45 C30,50 40,50 44,45"
+            },
+            {
+                id: 'aafarensis',
+                name: 'Australopithecus afarensis',
+                x: 150,
+                y: 200,
+                info: 'Australopithecus afarensis lived between 3.9 and 2.9 million years ago. The famous "Lucy" fossil belongs to this species, which showed evidence of bipedal walking but retained tree-climbing abilities.',
+                skullPath: "M35,10 C19,2 9,8 9,25 C9,35 14,48 35,70 C56,48 61,35 61,25 C61,8 51,2 35,10 M19,24 C19,27 22,30 25,30 C28,30 31,27 31,24 M39,24 C39,27 42,30 45,30 C48,30 51,27 51,24 M25,44 C29,49 41,49 45,44"
+            },
+            {
+                id: 'pantroglodytes',
+                name: 'Pan troglodytes (Chimpanzee)',
+                x: 800,
+                y: 450,
+                info: 'Chimpanzees are our closest living relatives, sharing about 98.8% of our DNA. They use tools, have complex social structures, and can learn sign language.',
+                skullPath: "M35,10 C18,0 8,6 8,25 C8,35 13,50 35,75 C57,50 62,35 62,25 C62,6 52,0 35,10 M17,20 C17,23 20,26 23,26 C26,26 29,23 29,20 M41,20 C41,23 44,26 47,26 C50,26 53,23 53,20 M25,45 C28,52 42,52 45,45"
+            },
+            {
+                id: 'panpaniscus',
+                name: 'Pan paniscus (Bonobo)',
+                x: 800,
+                y: 550,
+                info: 'Bonobos share the same percentage of DNA with humans as chimpanzees. They\'re known for their matriarchal society and for resolving conflicts through sexual behavior rather than violence.',
+                skullPath: "M35,10 C18,0 8,6 8,25 C8,35 13,50 35,74 C57,50 62,35 62,25 C62,6 52,0 35,10 M17,20 C17,23 20,26 23,26 C26,26 29,23 29,20 M41,20 C41,23 44,26 47,26 C50,26 53,23 53,20 M23,45 C27,51 43,51 47,45"
+            },
+            {
+                id: 'gorilla',
+                name: 'Gorilla',
+                x: 650,
+                y: 500,
+                info: 'Gorillas are the largest living primates and share about 98% of their DNA with humans. They\'re generally peaceful herbivores that live in structured social groups led by a dominant male.',
+                skullPath: "M35,8 C16,-2 6,4 6,25 C6,35 11,52 35,80 C59,52 64,35 64,25 C64,4 54,-2 35,8 M15,18 C15,21 18,24 21,24 C24,24 27,21 27,18 M43,18 C43,21 46,24 49,24 C52,24 55,21 55,18 M22,45 C26,52 44,52 48,45"
+            },
+            {
+                id: 'pongo',
+                name: 'Pongo (Orangutan)',
+                x: 450,
+                y: 500,
+                info: 'Orangutans share approximately 97% of their DNA with humans. They\'re the most arboreal of the great apes and are known for their intelligence, tool use, and solitary lifestyle.',
+                skullPath: "M35,10 C17,0 7,6 7,25 C7,35 12,52 35,78 C58,52 63,35 63,25 C63,6 53,0 35,10 M16,20 C16,23 19,26 22,26 C25,26 28,23 28,20 M42,20 C42,23 45,26 48,26 C51,26 54,23 54,20 M27,40 C30,47 40,47 43,40"
+            },
+            {
+                id: 'hylobates',
+                name: 'Hylobates (Gibbon)',
+                x: 250,
+                y: 500,
+                info: 'Gibbons are small apes known for their impressive brachiation (arm-swinging). They share about 96% of their DNA with humans and are monogamous, forming strong pair bonds.',
+                skullPath: "M35,12 C20,4 10,10 10,25 C10,35 15,48 35,65 C55,48 60,35 60,25 C60,10 50,4 35,12 M18,22 C18,25 21,28 24,28 C27,28 30,25 30,22 M40,22 C40,25 43,28 46,28 C49,28 52,25 52,22 M24,38 C28,43 42,43 46,38"
+            }
+        ];
+
+        // Divergence points
+        const divergences = [
+            { x: 700, y: 200, label: '~600,000 years ago', description: 'Divergence of Neanderthals, Denisovans, and Homo sapiens' },
+            { x: 575, y: 200, label: '~700,000 years ago', description: 'Homo heidelbergensis from Homo erectus' },
+            { x: 425, y: 200, label: '~1.8 million years ago', description: 'Homo erectus from Homo habilis' },
+            { x: 300, y: 200, label: '~2.3 million years ago', description: 'Homo from Australopithecus' },
+            { x: 200, y: 250, label: '~3.2 million years ago', description: 'Australopithecus africanus from Australopithecus afarensis' },
+            { x: 100, y: 200, label: '~4 million years ago', description: 'Australopithecus from earlier hominins' },
+            { x: 725, y: 500, label: '~9 million years ago', description: 'Gorilla from Human/Chimp lineage' },
+            { x: 550, y: 500, label: '~14 million years ago', description: 'Orangutan from African apes' },
+            { x: 350, y: 500, label: '~18 million years ago', description: 'Gibbon from great apes' },
+            { x: 725, y: 375, label: '~7 million years ago', description: 'Human from Chimpanzee/Bonobo lineage' },
+            { x: 800, y: 400, label: '~2 million years ago', description: 'Chimpanzee from Bonobo' }
+        ];
+
+        // Connect nodes with branches
+        const branches = [
+            // Vertical connections
+            { x1: 800, y1: 150, x2: 800, y2: 375, type: 'vertical' },
+            { x1: 800, y1: 400, x2: 800, y2: 500, type: 'vertical' },
+            { x1: 250, y1: 250, x2: 250, y2: 500, type: 'vertical' },
+            
+            // Horizontal connections
+            { x1: 700, y1: 150, x2: 800, y2: 150, type: 'horizontal' },
+            { x1: 700, y1: 200, x2: 800, y2: 200, type: 'horizontal' },
+            { x1: 700, y1: 300, x2: 800, y2: 300, type: 'horizontal' },
+            { x1: 575, y1: 200, x2: 700, y2: 200, type: 'horizontal' },
+            { x1: 425, y1: 200, x2: 575, y2: 200, type: 'horizontal' },
+            { x1: 300, y1: 200, x2: 425, y2: 200, type: 'horizontal' },
+            { x1: 200, y1: 200, x2: 300, y2: 200, type: 'horizontal' },
+            { x1: 100, y1: 200, x2: 200, y2: 200, type: 'horizontal' },
+            { x1: 725, y1: 375, x2: 800, y2: 375, type: 'horizontal' },
+            { x1: 725, y1: 500, x2: 800, y2: 500, type: 'horizontal' },
+            { x1: 550, y1: 500, x2: 725, y2: 500, type: 'horizontal' },
+            { x1: 350, y1: 500, x2: 550, y2: 500, type: 'horizontal' },
+            { x1: 250, y1: 500, x2: 350, y2: 500, type: 'horizontal' },
+            { x1: 200, y1: 250, x2: 250, y2: 250, type: 'horizontal' },
+
+            // Connect branches
+            { x1: 700, y1: 150, x2: 700, y2: 300, type: 'vertical' },
+            { x1: 575, y1: 200, x2: 575, y2: 200, type: 'vertical' },
+            { x1: 425, y1: 200, x2: 425, y2: 200, type: 'vertical' },
+            { x1: 300, y1: 200, x2: 300, y2: 200, type: 'vertical' },
+            { x1: 200, y1: 200, x2: 200, y2: 250, type: 'vertical' },
+            { x1: 100, y1: 200, x2: 100, y2: 200, type: 'vertical' },
+            { x1: 725, y1: 375, x2: 725, y2: 500, type: 'vertical' },
+            { x1: 550, y1: 500, x2: 550, y2: 500, type: 'vertical' },
+            { x1: 350, y1: 500, x2: 350, y2: 500, type: 'vertical' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tree = document.getElementById('evolutionary-tree');
+            const infoPanel = document.getElementById('info-panel');
+            const infoTitle = document.getElementById('info-title');
+            const infoContent = document.getElementById('info-content');
+
+            // Create branches
+            branches.forEach(branch => {
+                const branchElement = document.createElement('div');
+                branchElement.className = `branch ${branch.type}-branch`;
+                
+                if (branch.type === 'horizontal') {
+                    branchElement.style.left = `${Math.min(branch.x1, branch.x2)}px`;
+                    branchElement.style.top = `${branch.y1}px`;
+                    branchElement.style.width = `${Math.abs(branch.x2 - branch.x1)}px`;
+                } else {
+                    branchElement.style.left = `${branch.x1}px`;
+                    branchElement.style.top = `${Math.min(branch.y1, branch.y2)}px`;
+                    branchElement.style.height = `${Math.abs(branch.y2 - branch.y1)}px`;
+                }
+                
+                tree.appendChild(branchElement);
+            });
+
+            // Create species nodes
+            speciesData.forEach(species => {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.dataset.id = species.id;
+                node.style.left = `${species.x}px`;
+                node.style.top = `${species.y}px`;
+                
+                const skull = document.createElement('div');
+                skull.className = 'skull';
+                
+                // Create SVG for skull
+                skull.innerHTML = `
+                    <svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+                        <path d="${species.skullPath}" stroke="#f0e6d9" stroke-width="2" fill="none" />
+                    </svg>
+                `;
+                
+                const name = document.createElement('div');
+                name.className = 'species-name';
+                name.textContent = species.name;
+                
+                node.appendChild(skull);
+                node.appendChild(name);
+                
+                // Add click event
+                node.addEventListener('click', function() {
+                    infoTitle.textContent = species.name;
+                    infoContent.textContent = species.info;
+                    infoPanel.style.display = 'block';
+                });
+                
+                tree.appendChild(node);
+            });
+
+            // Create divergence points
+            divergences.forEach(div => {
+                const divergence = document.createElement('div');
+                divergence.className = 'divergence';
+                divergence.style.left = `${div.x - 50}px`;
+                divergence.style.top = `${div.y - 15}px`;
+                divergence.textContent = div.label;
+                
+                // Add hover title
+                divergence.title = div.description;
+                
+                tree.appendChild(divergence);
+            });
+        });
+    </script>
+    </body>
+</html>
